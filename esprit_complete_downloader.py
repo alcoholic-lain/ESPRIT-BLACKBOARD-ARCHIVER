@@ -4,10 +4,6 @@ ESPRIT Complete Downloader - Fixed Version
 - Better PDF naming (uses content title instead of ultraDocumentBody)
 - Improved formatting for PDFs (matches browser print output)
 - Cleaner folder structure
-- Embeds images as base64 for offline viewing
-
-Requirements:
-    pip install beautifulsoup4
 """
 
 from blackboard import BlackBoardClient
@@ -25,7 +21,6 @@ init()
 # Check for playwright
 try:
     from playwright.sync_api import sync_playwright
-
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
     PLAYWRIGHT_AVAILABLE = False
@@ -108,16 +103,13 @@ def download_pdf(client, url, filename, save_path):
         return False
 
 
-def save_html_page(content, save_path, display_name=None):
-    """Save HTML content as a clean HTML file with embedded images"""
+def save_html_page(content, save_path, mode='html'):
+    """Save HTML content as a clean HTML file"""
     if not content.body:
         return False
 
-    # Use display_name if provided (for ultraDocumentBody cases), otherwise use content title
-    title_to_use = display_name if display_name else content.title
-
-    # Clean filename for filesystem
-    filename_base = re.sub('[<>:"/\\\\|?*]', '', title_to_use)
+    # Use content title for filename - clean it for filesystem
+    filename_base = re.sub('[<>:"/\\\\|?*]', '', content.title)
     filename = filename_base + '.html'
     download_location = os.path.abspath(os.path.join(save_path, filename))
 
@@ -131,15 +123,12 @@ def save_html_page(content, save_path, display_name=None):
             print(f"      {Fore.YELLOW}⚠ Exists: {filename}{Style.RESET_ALL}")
             return False
 
-        # Process HTML body to fix image URLs and embed them
-        processed_body = process_html_content(content)
-
         # Create clean HTML document - exactly as it appears in Blackboard
         html_content = f"""<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <title>{html_lib.escape(title_to_use)}</title>
+    <title>{html_lib.escape(content.title)}</title>
     <style>
         body {{
             font-family: Arial, Helvetica, sans-serif;
@@ -154,17 +143,10 @@ def save_html_page(content, save_path, display_name=None):
         a {{
             color: #0066cc;
         }}
-        table {{
-            border-collapse: collapse;
-        }}
-        th, td {{
-            border: 1px solid #ddd;
-            padding: 8px;
-        }}
     </style>
 </head>
 <body>
-{processed_body}
+{content.body}
 </body>
 </html>"""
 
@@ -177,54 +159,6 @@ def save_html_page(content, save_path, display_name=None):
     except Exception as e:
         print(f"      {Fore.RED}✗ Error: {str(e)}{Style.RESET_ALL}")
         return False
-
-
-def process_html_content(content):
-    """Process HTML content to convert images to base64 data URLs"""
-    import base64
-    from bs4 import BeautifulSoup
-
-    try:
-        soup = BeautifulSoup(content.body, 'html.parser')
-
-        # Find all img tags
-        for img in soup.find_all('img'):
-            src = img.get('src')
-            if not src:
-                continue
-
-            # Make URL absolute if needed
-            if src.startswith('/'):
-                img_url = content.client.site + src
-            elif src.startswith('http'):
-                img_url = src
-            else:
-                # Relative URL
-                img_url = content.client.site + '/' + src
-
-            try:
-                # Download the image
-                response = content.client.session.get(img_url, timeout=10)
-                if response.status_code == 200:
-                    # Determine mime type
-                    content_type = response.headers.get('content-type', 'image/png')
-
-                    # Convert to base64
-                    img_base64 = base64.b64encode(response.content).decode('utf-8')
-
-                    # Create data URL
-                    data_url = f"data:{content_type};base64,{img_base64}"
-
-                    # Update img src
-                    img['src'] = data_url
-                    print(f"        {Fore.CYAN}✓ Embedded image from: {src[:50]}...{Style.RESET_ALL}")
-            except Exception as e:
-                print(f"        {Fore.YELLOW}⚠ Could not load image: {src[:50]}... ({str(e)}){Style.RESET_ALL}")
-
-        return str(soup)
-    except Exception as e:
-        print(f"        {Fore.YELLOW}⚠ Could not process HTML: {str(e)}{Style.RESET_ALL}")
-        return content.body
 
 
 def download_course_complete(course, save_location='./ESPRIT_Downloads', save_html_pages=False):
@@ -243,7 +177,7 @@ def download_course_complete(course, save_location='./ESPRIT_Downloads', save_ht
         'html_pages': 0,
     }
 
-    def process_content(content, path, level=0, parent_has_single_child=False, parent_title=None):
+    def process_content(content, path, level=0, parent_has_single_child=False):
         indent = "  " * level
         content_type = content.content_handler.id if content.content_handler else "unknown"
 
@@ -290,9 +224,7 @@ def download_course_complete(course, save_location='./ESPRIT_Downloads', save_ht
 
             # 3. Save HTML content
             if save_html_pages and content_type == "resource/x-bb-document":
-                # Use parent folder name for better context if available
-                save_name = parent_title if parent_title and content.title.lower() == "ultradocumentbody" else content.title
-                if save_html_page(content, child_path, save_name):
+                if save_html_page(content, child_path):
                     stats['html_pages'] += 1
 
         # 4. Process children
@@ -301,8 +233,7 @@ def download_course_complete(course, save_location='./ESPRIT_Downloads', save_ht
                 children = content.children()
                 has_single_child = len(children) == 1
                 for child in children:
-                    # Pass current content title as parent for better naming
-                    process_content(child, child_path, level + 1, has_single_child, content.title)
+                    process_content(child, child_path, level + 1, has_single_child)
             except:
                 pass
 
