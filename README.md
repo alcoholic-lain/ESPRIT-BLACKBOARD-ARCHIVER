@@ -9,7 +9,7 @@ to run :
 1 via api :
   python esprit_complete_downloader.py 
 2 web scrapper :
-  python slow_web_scrapper.py
+  python slow_web_scraper.py
 
 debug :
 deep_fetch_idk_i_forgot_the_file_name.py
