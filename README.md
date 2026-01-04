@@ -46,7 +46,7 @@ note :
 
 
 
-ignore the main.py it's just old from a fork 
+ignore the main.py it's just an old file from a fork , you probably can delete it :< 
 
 
 
