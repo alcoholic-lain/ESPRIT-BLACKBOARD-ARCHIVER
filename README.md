@@ -9,7 +9,7 @@ to run :
 
 
 1 via api :
-  python esprit_complete_downloader.py 
+  python esprit_blackboard_downloader.py 
 
 
 
@@ -21,5 +21,45 @@ to run :
   
 
 debug :
-deep_fetch_idk_i_forgot_the_file_name.py
+
+
+esprit_diagnostic.py
+
+
+esprit_deep_fetch.py
+
+
+esprit_debug_downloader.py
+
+
+
+
+
+
 other_debug_files.py
+
+
+
+
+
+note :
+
+
+
+ignore the main.py it's just old from a fork 
+
+
+
+if you have any questions contact lain456 on discord
+
+
+
+
+
+peace <3
+
+
+
+
+
+
