@@ -1,4 +1,9 @@
 """
+this approche was supervised by kinto . 
+good job ! , tho looping F5 isn't the best thing to do :<                     -lain
+
+
+
 Blackboard Ultra Web Scraper for ESPRIT
 Downloads all course content (PDFs, documents, and text pages)
 
