@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 """
+TODO : make sure the script misses nth  
+
+
+
 ESPRIT Complete Downloader - Fixed Version
 - Better PDF naming (uses content title instead of ultraDocumentBody)
 - Improved formatting for PDFs (matches browser print output)
